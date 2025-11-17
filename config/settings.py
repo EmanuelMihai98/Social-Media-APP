@@ -105,8 +105,16 @@ if IS_RAILWAY:
             ssl_require=True
         )
     }
-    DEBUG = False
-    ALLOWED_HOSTS = ['.up.railway.app']
+    DEBUG = True
+    ALLOWED_HOSTS = [
+        '*',  # Temporar
+        '.up.railway.app',
+        '.railway.app',
+    ]
+    CSRF_TRUSTED_ORIGINS = [  # Mută aici!
+        'https://*.railway.app',
+        'https://*.up.railway.app',
+    ]
 
 else:
     DATABASES = {
@@ -120,15 +128,7 @@ else:
         }
     }
     DEBUG = True
-    ALLOWED_HOSTS = [
-    '.up.railway.app',
-    '.railway.app',
-    os.environ.get('RAILWAY_PUBLIC_DOMAIN', ''),
-]
-    CSRF_TRUSTED_ORIGINS = [
-        'https://*.railway.app',
-        'https://*.up.railway.app',
-    ]
+    ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
