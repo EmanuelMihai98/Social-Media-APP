@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feed - SocialApp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .post-card {
+            animation: slideUp 0.4s ease-out;
+            transition: all 0.3s ease;
+        }
+        
+        .post-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .header-sticky {
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.95);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .like-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .like-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .like-btn.liked {
+            color: #ef4444;
+            animation: heartBeat 0.3s ease;
+        }
+        
+        @keyframes heartBeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        .avatar-ring {
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+        
+        .create-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .create-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Dropdown menu fix */
+        .dropdown-menu {
+            display: none;
+        }
+        
+        .dropdown-wrapper:hover .dropdown-menu {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    
+    <!-- Header Sticky -->
+    <header class="header-sticky sticky top-0 z-50 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <h1 class="text-5xl font-black gradient-text tracking-tight">
+                    FEED
+                </h1>
+                
+                <!-- User Info & Actions -->
+                <div class="flex items-center space-x-4">
+                    <!-- Current User -->
+                    <a href="/profile/{{ request.user.username }}/" 
+                       class="flex items-center space-x-2 hover:bg-gray-100 px-3 py-2 rounded-xl transition">
+                        {% if request.user.profile.profile_pic %}
+                            <img src="{{ request.user.profile.profile_pic.url }}" 
+                                 alt="{{ request.user.username }}"
+                                 class="w-10 h-10 rounded-full object-cover avatar-ring">
+                        {% else %}
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center avatar-ring">
+                                <span class="text-white font-bold text-lg">
+                                    {{ request.user.username|first|upper }}
+                                </span>
+                            </div>
+                        {% endif %}
+                        <span class="font-semibold text-gray-800 hidden sm:block">
+                            @{{ request.user.username }}
+                        </span>
+                    </a>
+                    
+                    <!-- Create Post Button -->
+                    <a href="/posts/create/" 
+                       class="create-btn gradient-bg text-white px-4 py-2 rounded-xl font-semibold shadow-lg flex items-center space-x-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        <span class="hidden sm:inline">Post</span>
+                    </a>
+                    
+                    <!-- Settings -->
+                    <a href="/profile/edit/" 
+                       class="text-gray-600 hover:text-purple-600 transition p-2 rounded-lg hover:bg-gray-100">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Feed Content -->
+    <main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
+        
+        {% if posts %}
+            {% for post in posts %}
+            <article class="post-card bg-white rounded-3xl shadow-lg overflow-hidden">
+                <!-- Post Header -->
+                <div class="flex items-center justify-between p-4">
+                    <a href="/profile/{{ post.author.username }}/" 
+                       class="flex items-center space-x-3 hover:opacity-80 transition">
+                        {% if post.author.profile.profile_pic %}
+                            <img src="{{ post.author.profile.profile_pic.url }}" 
+                                 alt="{{ post.author.username }}"
+                                 class="w-12 h-12 rounded-full object-cover">
+                        {% else %}
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
+                                <span class="text-white font-bold text-xl">
+                                    {{ post.author.username|first|upper }}
+                                </span>
+                            </div>
+                        {% endif %}
+                        <div>
+                            <p class="font-bold text-gray-900">@{{ post.author.username }}</p>
+                            <p class="text-sm text-gray-500">{{ post.created_at|timesince }} ago</p>
+                        </div>
+                    </a>
+                    
+                    {% if post.author == request.user %}
+                <div class="relative">
+                    <button onclick="toggleDropdown(event, 'dropdown-{{ post.id }}')" 
+                            class="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path>
+                        </svg>
+                    </button>
+                    <div id="dropdown-{{ post.id }}" 
+                        class="hidden absolute right-0 top-full mt-1 bg-white rounded-lg shadow-xl border border-gray-200 py-2 w-40 z-50">
+                        <a href="/posts/{{ post.id }}/edit/" 
+                        class="block px-4 py-2 hover:bg-gray-100 text-sm text-gray-700 transition">
+                            ✏️ Edit
+                        </a>
+                        <a href="/posts/{{ post.id }}/delete/" 
+                        class="block px-4 py-2 hover:bg-red-50 text-red-600 text-sm transition">
+                            🗑️ Delete
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                </div>
+                
+                <!-- Post Image/Content -->
+                {% if post.content %}
+                <a href="/posts/{{ post.id }}/">
+                    <img src="{{ post.content.url }}" 
+                         alt="Post content"
+                         class="w-full object-cover max-h-[600px] hover:opacity-95 transition cursor-pointer">
+                </a>
+                {% endif %}
+                
+                <!-- Post Actions -->
+                <div class="p-4 space-y-3">
+                    <!-- Like & Comment Buttons -->
+                    <div class="flex items-center space-x-4">
+                        <button onclick="likePost('{{ post.id }}')" 
+                                class="like-btn flex items-center space-x-2 text-gray-700 hover:text-red-500 transition">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                            </svg>
+                            <span class="font-semibold">{{ post.likes.count }}</span>
+                        </button>
+                        
+                        <a href="/posts/{{ post.id }}/" 
+                           class="flex items-center space-x-2 text-gray-700 hover:text-purple-600 transition">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                            </svg>
+                            <span class="font-semibold">{{ post.comments.count }}</span>
+                        </a>
+                    </div>
+                    
+                    <!-- Caption -->
+                    {% if post.content_description %}
+                    <div class="text-gray-800">
+                        <span class="font-semibold">@{{ post.author.username }}</span>
+                        <span class="ml-2">{{ post.content_description }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- View Comments Link -->
+                    {% if post.comments.count > 0 %}
+                    <a href="/posts/{{ post.id }}/" 
+                       class="text-gray-500 text-sm hover:text-gray-700">
+                        View all {{ post.comments.count }} comment{{ post.comments.count|pluralize }}
+                    </a>
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+            
+        {% else %}
+            <!-- Empty State -->
+            <div class="bg-white rounded-3xl shadow-lg p-16 text-center">
+                <div class="text-8xl mb-6">📱</div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Your Feed is Empty</h2>
+                <p class="text-gray-600 text-lg mb-8">
+                    Start following people to see their posts here!
+                </p>
+                <a href="/explore/" 
+                   class="inline-block gradient-bg text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition transform hover:scale-105">
+                    Discover People
+                </a>
+            </div>
+        {% endif %}
+        
+    </main>
+
+    <!-- Like Post Script -->
+    <script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function likePost(postId) {
+        fetch(`/api/posts/${postId}/like/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            location.reload();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+    function toggleDropdown(event, dropdownId) {
+        event.stopPropagation();
+        
+        const dropdown = document.getElementById(dropdownId);
+        
+        // Close all other dropdowns
+        document.querySelectorAll('[id^="dropdown-"]').forEach(d => {
+            if (d.id !== dropdownId) {
+                d.classList.add('hidden');
+            }
+        });
+        
+        // Toggle current dropdown
+        dropdown.classList.toggle('hidden');
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('button[onclick^="toggleDropdown"]')) {
+            document.querySelectorAll('[id^="dropdown-"]').forEach(d => {
+                d.classList.add('hidden');
+            });
+        }
+    });
+</script>
+</body>
+</html>

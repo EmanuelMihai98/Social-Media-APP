@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user.username }} - Social Stream Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        /* ==================================== */
+        /* CULORI ȘI STILURI DE BAZĂ */
+        /* ==================================== */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        :root {
+            --primary: #00bcd4; /* Cyan Electric */
+            --secondary: #ffc107; /* Amber/Gold Vibrant */
+            --bg-dark: #121212; 
+        }
+        
+        * { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #00BCD4 0%, #00897B 100%); }
+        .dark-bg { background-color: var(--bg-dark); }
+        .profile-card { animation: slideUp 0.6s ease-out; box-shadow: 0 40px 60px -20px rgba(0, 188, 212, 0.15); }
+        .avatar-glow { box-shadow: 0 0 0 5px rgba(0, 188, 212, 0.4), 0 0 20px 5px rgba(0, 188, 212, 0.2); transition: box-shadow 0.5s ease-in-out; }
+        .avatar-glow:hover { box-shadow: 0 0 0 8px rgba(255, 193, 7, 0.5), 0 0 30px 10px rgba(0, 188, 212, 0.4); }
+        .follow-btn { transition: all 0.3s ease; }
+        .follow-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255, 193, 7, 0.3); }
+
+        .post-card-3d {
+            transition: transform 0.4s ease-out, box-shadow 0.4s ease-out;
+            transform-style: preserve-3d;
+        }
+        .post-card-3d:hover {
+            transform: translateY(-8px) rotateZ(0.5deg); 
+            box-shadow: 0 25px 50px -12px rgba(0, 188, 212, 0.45); 
+        }
+
+        .tab-content {
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.3s ease-in-out, max-height 0.4s ease-in-out;
+        }
+        .active-content {
+            opacity: 1;
+            max-height: 2000px;
+            overflow: visible;
+        }
+
+        /* Stil NOU pentru Canvas-ul cu Emojiuri */
+        #emoji-canvas {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0; /* Fundal */
+            background-color: #121212;
+        }
+        
+        /* Containerul principal al conținutului trebuie să fie deasupra */
+        #main-content {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Stil pentru Spark/Scântei (Rămâne la fel) */
+        .spark-effect {
+            position: absolute;
+            pointer-events: none;
+            width: 10px;
+            height: 10px;
+            background-color: var(--secondary); 
+            border-radius: 50%;
+            opacity: 0;
+            transform: scale(0);
+            animation: spark 0.5s ease-out forwards;
+        }
+        @keyframes spark {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: translate(var(--x), var(--y)) scale(0); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="dark-bg min-h-screen text-gray-100 relative">
+
+    <canvas id="emoji-canvas"></canvas>
+    
+    <div id="main-content">
+        
+        <nav class="gradient-bg text-white shadow-xl">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center space-x-8">
+                        <h1 class="text-2xl font-bold">SocialApp</h1>
+                        <div class="hidden md:flex space-x-4">
+                            <a href="/" class="interactive-btn hover:bg-white/10 px-3 py-2 rounded-lg transition">Home</a>
+                            <a href="/feed/" class="interactive-btn hover:bg-white/10 px-3 py-2 rounded-lg transition">Feed</a>
+                            <a href="/explore/" class="interactive-btn hover:bg-white/10 px-3 py-2 rounded-lg transition">Explore</a>
+                        </div>
+                    </div>
+                    
+                    {% if request.user.is_authenticated %}
+                    <div class="flex items-center space-x-4">
+                        <a href="/profile/{{ request.user.username }}/" class="interactive-btn hover:bg-white/10 px-3 py-2 rounded-lg transition">My Profile</a>
+                        <a href="{% url 'user_logout' %}" class="interactive-btn bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition">Logout</a>
+                    </div>
+                    {% else %}
+                    <div class="flex space-x-3">
+                        <a href="{% url 'user_login' %}" class="interactive-btn hover:bg-white/10 px-4 py-2 rounded-lg transition">Login</a>
+                        <a href="{% url 'user_register' %}" class="interactive-btn bg-yellow-500 text-gray-900 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-400 transition">Sign Up</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
+
+        <div class="bg-gray-900 pb-32 pt-12">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="profile-card bg-gray-800 rounded-3xl shadow-2xl overflow-hidden border border-gray-700">
+                    <div class="relative h-48 gradient-bg"></div>
+                    
+                    <div class="relative px-8 pb-8">
+                        <div class="flex justify-between items-start -mt-20 mb-6">
+                            <div class="avatar-glow bg-gray-900 rounded-full p-2">
+                                {% if profile.profile_pic %}
+                                    <img src="{{ profile.profile_pic.url }}" alt="{{ user.username }}" class="w-32 h-32 rounded-full object-cover border-4 border-gray-900">
+                                {% else %}
+                                    <div class="w-32 h-32 rounded-full bg-cyan-500 flex items-center justify-center border-4 border-gray-900">
+                                        <span class="text-gray-900 text-5xl font-bold">{{ user.username|first|upper }}</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mt-4 flex space-x-3">
+                                {% if user == request.user %}
+                                    <a href="{% url 'profile_edit' %}" class="interactive-btn follow-btn bg-yellow-500 text-gray-900 px-6 py-3 rounded-xl font-semibold shadow-xl hover:bg-yellow-400">✏️ Edit Profile</a>
+                                {% else %}
+                                    {% if is_following %}
+                                        <button onclick="toggleFollow('{{ user.id }}')" class="interactive-btn follow-btn bg-gray-600 text-gray-200 px-6 py-3 rounded-xl font-semibold shadow-lg hover:bg-gray-500">✓ Following</button>
+                                    {% else %}
+                                        <button onclick="toggleFollow('{{ user.id }}')" class="interactive-btn follow-btn bg-cyan-500 text-gray-900 px-6 py-3 rounded-xl font-semibold shadow-xl hover:bg-cyan-400">+ Follow</button>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <h1 class="text-4xl font-bold text-gray-50">{{ profile.display_name|default:user.username }}</h1>
+                                <p class="text-xl text-cyan-400">@{{ user.username }}</p>
+                            </div>
+                            
+                            {% if profile.bio %}
+                            <p class="text-gray-300 text-lg leading-relaxed max-w-2xl">{{ profile.bio }}</p>
+                            {% endif %}
+                            
+                            <div class="grid grid-cols-3 gap-4 mt-8">
+                                <div class="stat-card bg-gray-900 rounded-2xl p-6 text-center border border-gray-700">
+                                    <div class="text-3xl font-bold text-yellow-500">{{ user.posts.count }}</div>
+                                    <div class="text-sm text-gray-400 font-medium mt-1">Posts</div>
+                                </div>
+                                <div class="stat-card bg-gray-900 rounded-2xl p-6 text-center border border-gray-700">
+                                    <div class="text-3xl font-bold text-yellow-500">{{ profile.followers_count }}</div>
+                                    <div class="text-sm text-gray-400 font-medium mt-1">Followers</div>
+                                </div>
+                                <div class="stat-card bg-gray-900 rounded-2xl p-6 text-center border border-gray-700">
+                                    <div class="text-3xl font-bold text-yellow-500">{{ profile.following_count }}</div>
+                                    <div class="text-sm text-gray-400 font-medium mt-1">Following</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 pb-12">
+            
+            <div class="bg-gray-800 rounded-t-xl p-4 flex justify-around border-b border-gray-700">
+                <button data-target="posts-content" class="tab-control text-lg font-semibold px-4 py-2 hover:text-cyan-400 transition">Postări</button>
+                <button data-target="followers-content" class="tab-control text-lg font-semibold px-4 py-2 hover:text-cyan-400 transition">Urmăritori</button>
+                <button data-target="following-content" class="tab-control text-lg font-semibold px-4 py-2 hover:text-cyan-400 transition">Urmăriți</button>
+            </div>
+
+            <div id="content-container" class="bg-gray-800 rounded-b-xl p-6 border-t-0 border border-gray-700">
+                
+                <div id="posts-content" class="tab-content">
+                    <h2 class="text-2xl font-bold text-gray-50 mb-6">Postări Recente</h2>
+                    {% if user.posts.all %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% for post in user.posts.all %}
+                        <a href="/posts/{{ post.id }}/" class="group interactive-btn">
+                            <div class="post-card-3d bg-gray-900 rounded-2xl shadow-xl overflow-hidden border border-gray-700">
+                                {% if post.content %}
+                                    <img src="{{ post.content.url }}" alt="Post" class="w-full h-64 object-cover">
+                                {% else %}
+                                    <div class="w-full h-64 bg-cyan-600/30 flex items-center justify-center">
+                                        <span class="text-gray-300">No Image</span>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="p-4">
+                                    <p class="text-gray-300 line-clamp-2">{{ post.content_description|default:"No description" }}</p>
+                                    <div class="flex items-center justify-between mt-3 text-sm text-gray-500">
+                                        <span>❤️ {{ post.likes.count }} likes</span>
+                                        <span>{{ post.created_at|date:"M d" }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="bg-gray-900 rounded-2xl shadow-lg p-12 text-center border border-gray-700">
+                        <div class="text-6xl mb-4 text-cyan-400">📸</div>
+                        <h3 class="text-2xl font-bold text-gray-50 mb-2">No posts yet</h3>
+                        <p class="text-gray-400">
+                            {% if user == request.user %}
+                                Share your first post to get started!
+                            {% else %}
+                                {{ user.username }} hasn't posted anything yet.
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div id="followers-content" class="tab-content">
+                    <div class="p-4 text-center">
+                        <h2 class="text-3xl font-bold text-yellow-500 mb-4">Urmăritori ({{ profile.followers_count }})</h2>
+                        <p class="text-gray-400">Aici vor fi listați utilizatorii care te urmăresc.</p>
+                    </div>
+                </div>
+                
+                <div id="following-content" class="tab-content">
+                    <div class="p-4 text-center">
+                        <h2 class="text-3xl font-bold text-cyan-500 mb-4">Urmăriți ({{ profile.following_count }})</h2>
+                        <p class="text-gray-400">Aici vor fi listați utilizatorii pe care îi urmărești.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> <script>
+        
+        // -------------------------------------
+        // 1. FUNDALUL ANIMAT CU EMOJIURI (Canvas)
+        // -------------------------------------
+        const canvas = document.getElementById('emoji-canvas');
+        const ctx = canvas.getContext('2d');
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+
+        const emojis = ['❤️', '😂', '🔥', '💬', '🌟', '👍', '😊', '😍'];
+        const emojiCount = 40; // Numar de emojiuri pe ecran
+        const streams = [];
+
+        canvas.width = width;
+        canvas.height = height;
+
+        class EmojiStream {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = height + 50;
+                this.size = 15 + Math.random() * 30; // Dimensiune variabilă
+                this.speed = 1 + Math.random() * 2;
+                this.emoji = emojis[Math.floor(Math.random() * emojis.length)];
+                this.opacity = 0.5 + Math.random() * 0.5;
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.5;
+                
+                // Variabile pentru urmărirea cursorului (efect subtil)
+                this.targetX = this.x;
+                this.targetY = this.y;
+                this.influence = 0.05; 
+            }
+
+            update() {
+                this.y -= this.speed;
+                this.rotation += this.rotationSpeed;
+                
+                // Deplaseaza emojiul spre cursor (efect de atractie subtil)
+                if (mouse.x !== null) {
+                    this.targetX = mouse.x;
+                    this.targetY = mouse.y;
+                    this.x += (this.targetX - this.x) * this.influence * 0.05; 
+                    this.y += (this.targetY - this.y) * this.influence * 0.05; 
+                }
+
+                // Resetare când iese din ecran
+                if (this.y < -50) {
+                    this.y = height + 50;
+                    this.x = Math.random() * width;
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                ctx.font = `${this.size}px Arial`;
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation * Math.PI / 180);
+                ctx.fillText(this.emoji, 0, 0);
+                ctx.restore();
+            }
+        }
+
+        function initStreams() {
+            for (let i = 0; i < emojiCount; i++) {
+                streams.push(new EmojiStream());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            streams.forEach(stream => {
+                stream.update();
+                stream.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        
+        const mouse = { x: null, y: null };
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+        window.addEventListener('resize', () => {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        });
+
+        initStreams();
+        animate();
+
+
+      
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabControls = document.querySelectorAll('.tab-control');
+            const initialTargetId = 'posts-content'; 
+
+            function switchTab(targetId) {
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active-content');
+                });
+                const activeContent = document.getElementById(targetId);
+                if (activeContent) {
+                    activeContent.classList.add('active-content');
+                }
+            }
+
+            function setActiveControl(activeButton) {
+                 tabControls.forEach(btn => {
+                    btn.classList.remove('text-yellow-500', 'border-b-4', 'border-yellow-500');
+                    btn.classList.add('text-gray-400');
+                });
+                activeButton.classList.add('text-yellow-500', 'border-b-4', 'border-yellow-500');
+                activeButton.classList.remove('text-gray-400');
+            }
+
+            tabControls.forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-target');
+                    switchTab(targetId);
+                    setActiveControl(this);
+                });
+            });
+
+            const initialButton = document.querySelector('.tab-control[data-target="' + initialTargetId + '"]');
+            if (initialButton) {
+                switchTab(initialTargetId);
+                setActiveControl(initialButton);
+            }
+        });
+
+        
+        document.querySelectorAll('.interactive-btn').forEach(element => {
+            element.addEventListener('click', function(e) {
+                const rect = element.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                for (let i = 0; i < 10; i++) {
+                    const spark = document.createElement('div');
+                    spark.classList.add('spark-effect');
+                    
+                    const randomX = (Math.random() - 0.5) * 60; 
+                    const randomY = (Math.random() - 0.5) * 60; 
+
+                    spark.style.left = `${x}px`;
+                    spark.style.top = `${y}px`;
+                    spark.style.setProperty('--x', `${randomX}px`);
+                    spark.style.setProperty('--y', `${randomY}px`);
+                    
+                    element.appendChild(spark);
+                    
+                    spark.addEventListener('animationend', () => {
+                        spark.remove();
+                    });
+                }
+            });
+        });
+
+       
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function toggleFollow(userId) {
+            fetch('/api/follows/toggle/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({following_id: userId})
+            })
+            .then(response => response.json())
+            .then(data => {
+                location.reload(); 
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to toggle follow. Please try again.');
+            });
+        }
+    </script>
+</body>
+</html>

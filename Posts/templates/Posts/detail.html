@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Details</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 8px 16px;
+            background: white;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #374151;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .back-button:hover {
+            background: #f3f4f6;
+        }
+        
+        .post-detail {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .post-header {
+            padding: 20px;
+            border-bottom: 1px solid #efefef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .author-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .author-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .author-details h3 {
+            font-size: 16px;
+            color: #262626;
+        }
+        
+        .author-details p {
+            font-size: 12px;
+            color: #8e8e8e;
+        }
+        
+        .post-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-edit {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        .btn-edit:hover {
+            background: #e5e7eb;
+        }
+        
+        .btn-delete {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+        
+        .btn-delete:hover {
+            background: #fee2e2;
+        }
+        
+        .post-image {
+            width: 100%;
+            max-height: 600px;
+            object-fit: cover;
+            background: #f3f4f6;
+        }
+        
+        .no-image {
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f9fafb;
+            color: #9ca3af;
+            font-size: 64px;
+        }
+        
+        .post-content {
+            padding: 20px;
+        }
+        
+        .post-stats {
+            display: flex;
+            gap: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #efefef;
+        }
+        
+        .stat {
+            font-weight: 600;
+            color: #262626;
+        }
+        
+        .post-description {
+            padding: 15px 0;
+            color: #262626;
+            line-height: 1.6;
+        }
+        
+        .comments-section {
+            padding: 20px;
+            background: #fafafa;
+        }
+        
+        .comments-header {
+            font-size: 18px;
+            font-weight: 600;
+            color: #262626;
+            margin-bottom: 15px;
+        }
+        
+        .comment {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .comment-author {
+            font-weight: 600;
+            color: #262626;
+            margin-bottom: 5px;
+        }
+        
+        .comment-text {
+            color: #374151;
+            line-height: 1.5;
+        }
+        
+        .no-comments {
+            text-align: center;
+            padding: 30px;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{% url 'feed:feed' %}" class="back-button">← Back</a>
+        
+        <div class="post-detail">
+            <div class="post-header">
+                <div class="author-info">
+                    <div class="author-avatar">
+                        {{ post.author.username|first|upper }}
+                    </div>
+                    <div class="author-details">
+                        <h3>@{{ post.author.username }}</h3>
+                        <p>{{ post.created_at|timesince }} ago</p>
+                    </div>
+                </div>
+                
+                {% if post.author == user %}
+                <div class="post-actions">
+                    <a href="/posts/{{ post.pk }}/edit/" class="btn btn-edit">✏️ Edit</a>
+                    <a href="/posts/{{ post.pk }}/delete/" class="btn btn-delete">🗑️ Delete</a>
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if post.content %}
+                <img src="{{ post.content.url }}" alt="Post" class="post-image">
+            {% else %}
+                <div class="no-image">📷</div>
+            {% endif %}
+            
+            <div class="post-content">
+                <div class="post-stats">
+                    <span class="stat">❤️ {{ post.likes.count }} likes</span>
+                    <span class="stat">💬 {{ post.comments.count }} comments</span>
+                </div>
+                
+                {% if post.content_description %}
+                    <div class="post-description">
+                        <strong>@{{ post.author.username }}</strong> {{ post.content_description }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="comments-section">
+                <h2 class="comments-header">Comments</h2>
+                
+                {% if post.comments.all %}
+                    {% for comment in post.comments.all %}
+                    <div class="comment">
+                        <div class="comment-author">@{{ comment.author.username }}</div>
+                        <div class="comment-text">{{ comment.text }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-comments">
+                        No comments yet. Be the first to comment!
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
