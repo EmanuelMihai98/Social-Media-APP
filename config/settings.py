@@ -107,7 +107,7 @@ if IS_RAILWAY:
     }
     DEBUG = False
     ALLOWED_HOSTS = ['.up.railway.app']
-    
+
 else:
     DATABASES = {
         'default': {
@@ -119,7 +119,12 @@ else:
             'PORT': '5432',
         }
     }
-    ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+    DEBUG = True
+    ALLOWED_HOSTS = [
+    '.up.railway.app',
+    '.railway.app',
+    os.environ.get('RAILWAY_PUBLIC_DOMAIN', ''),
+]
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
