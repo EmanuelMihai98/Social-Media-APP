@@ -8,6 +8,11 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
 from follows.models import Follow
 from django.contrib import messages
+from django.http import HttpResponse
+from datetime import datetime, timedelta
+import random
+from Posts.models import Post
+from comments.models import Comment
 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
@@ -100,16 +105,7 @@ def user_logout(request):
     messages.success(request, f"Good-Bye, {username}!")
     return redirect("user_login")
 
-        # Add this to one of your views.py files (e.g., Profile/views.py or create a new utils.py)
 
-from django.http import HttpResponse
-from django.contrib.auth.models import User
-from Profile.models import Profile
-from Posts.models import Post
-from follows.models import Follow
-from comments.models import Comment
-from datetime import datetime, timedelta
-import random
 
 def populate_database(request):
     """
