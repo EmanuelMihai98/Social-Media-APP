@@ -25,7 +25,7 @@ from Posts.urls import web_urlpatterns as posts_web_urls
 from comments.urls import api_urlpatterns as comments_api_urls
 from comments.urls import web_urlpatterns as comments_web_urls
 from .views import home_view, demo_login
-from Profile.views import populate_database
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -41,7 +41,7 @@ urlpatterns = [
     path("posts/", include(posts_web_urls)),
     path("comments/", include(comments_web_urls)),
     path("feed/", include("feed.urls")),
-    path('populate-db/', populate_database, name='populate_db'),
+    
 ]
 
 if settings.DEBUG:
