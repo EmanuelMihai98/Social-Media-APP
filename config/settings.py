@@ -95,18 +95,20 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-if os.environ.get('RAILWAY_ENVIRONMENT'):
+IS_RAILWAY = os.environ.get("RAILWAY_PROJECT_ID") is not None
 
+if IS_RAILWAY:
     DATABASES = {
         'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL')
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            ssl_require=True
         )
     }
-   
-    ALLOWED_HOSTS = ['.up.railway.app', '127.0.0.1', 'localhost']
     DEBUG = False
+    ALLOWED_HOSTS = ['.up.railway.app']
+    
 else:
-
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
