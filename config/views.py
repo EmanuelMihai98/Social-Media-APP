@@ -3,6 +3,7 @@ from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.contrib import messages
 from Profile.models import Profile
+from django.http import HttpResponse
 
 def home_view(request):
     return render(request, "home.html")
@@ -20,7 +21,7 @@ def demo_login(request):
             first_name="Demo",
             last_name="User"
         )
-    
+       
         Profile.objects.get_or_create(
             user=demo_user,
             defaults={'bio': 'Demo user - Try the app! 🎉'}
@@ -30,3 +31,17 @@ def demo_login(request):
     login(request, demo_user, backend='django.contrib.auth.backends.ModelBackend')
     messages.success(request, "You're now viewing as demo user. Explore the app!")
     return redirect("/feed/")
+
+def create_admin(request): 
+    try:
+        user, created = User.objects.get_or_create(username='admin')
+        if created:
+            user.set_password('admin123')
+            user.is_superuser = True
+            user.is_staff = True
+            user.email = 'admin@test.com'
+            user.save()
+            return HttpResponse("✅ Admin created! Username: admin, Password: admin123")
+        return HttpResponse("ℹ️ Admin already exists")
+    except Exception as e:
+        return HttpResponse(f"❌ Error: {str(e)}")
