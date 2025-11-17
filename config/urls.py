@@ -24,14 +24,12 @@ from Posts.urls import api_urlpatterns as posts_api_urls
 from Posts.urls import web_urlpatterns as posts_web_urls
 from comments.urls import api_urlpatterns as comments_api_urls
 from comments.urls import web_urlpatterns as comments_web_urls
-from .views import home_view, demo_login, create_admin
-
+from .views import home_view, demo_login
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("", home_view, name="home"),
     path("demo/", demo_login, name="demo_login"),
-    path("create-admin/", create_admin),
     path("api/", include([
             path("profiles/", include(profile_api_urls)),
             path("posts/", include(posts_api_urls)),
