@@ -125,6 +125,10 @@ else:
     '.railway.app',
     os.environ.get('RAILWAY_PUBLIC_DOMAIN', ''),
 ]
+    CSRF_TRUSTED_ORIGINS = [
+        'https://*.railway.app',
+        'https://*.up.railway.app',
+    ]
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
