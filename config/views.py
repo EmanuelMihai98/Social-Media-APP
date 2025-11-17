@@ -31,17 +31,3 @@ def demo_login(request):
     login(request, demo_user, backend='django.contrib.auth.backends.ModelBackend')
     messages.success(request, "You're now viewing as demo user. Explore the app!")
     return redirect("/feed/")
-
-def create_admin(request): 
-    try:
-        user, created = User.objects.get_or_create(username='admin')
-        if created:
-            user.set_password('admin123')
-            user.is_superuser = True
-            user.is_staff = True
-            user.email = 'admin@test.com'
-            user.save()
-            return HttpResponse("✅ Admin created! Username: admin, Password: admin123")
-        return HttpResponse("ℹ️ Admin already exists")
-    except Exception as e:
-        return HttpResponse(f"❌ Error: {str(e)}")
