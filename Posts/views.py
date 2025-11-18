@@ -47,7 +47,7 @@ def get_post(request, pk):
             comment.author = request.user
             comment.post = post
             comment.save()
-            return redirect("posts:detail", pk=pk)
+            return redirect("post_detail", pk=pk)
         
     else:
         form = CommentForm()
@@ -63,7 +63,7 @@ def get_post(request, pk):
 
 def post_create(request):
     if not request.user.is_authenticated:
-        return redirect("posts:list")
+        return redirect("post_list")
     
     if request.method == "POST":
         form = PostForm(request.POST, request.FILES)
@@ -71,7 +71,7 @@ def post_create(request):
             post = form.save(commit=False)
             post.author = request.user
             post.save()
-            return redirect("posts:detail", pk=post.pk)
+            return redirect("post_detail", pk=post.pk)
         
     else:
         form = PostForm()
@@ -81,13 +81,13 @@ def post_create(request):
 def edit_post(request, pk):
     post = get_object_or_404(Post, pk=pk)
     if post.author != request.user:
-        return redirect("posts:detail", pk=pk)
+        return redirect("post_detail", pk=pk)
     
     if request.method == "POST":
         form = PostForm(request.POST, request.FILES, instance=post)
         if form.is_valid():
             form.save()
-            return redirect("posts:detail", pk=pk)
+            return redirect("post_detail", pk=pk)
         
     else:
         form = PostForm(instance=post)
